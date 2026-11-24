@@ -409,6 +409,31 @@ export async function checkUpiServerHealth(ctx, enabledMethods = [], sellingMode
 }
 
 export function registerCheckoutRoutes(server, ctx) {
+  // Public Gateway Info: GET /api/v1/checkout/gateway-info
+  server.get('/api/v1/checkout/gateway-info', async (req, res) => {
+    const merchant = ctx.merchantRepo.getDefault
+      ? ctx.merchantRepo.getDefault()
+      : (ctx.merchantRepo.findById('00000000-0000-0000-0000-000000000001') || ctx.merchantRepo.findAll()[0]);
+
+    const merchantId = merchant?.id || '00000000-0000-0000-0000-000000000001';
+    let account = ctx.accountRepo.findActiveForMerchant(merchantId);
+    if (!account) {
+      const all = ctx.accountRepo.findByMerchantId ? ctx.accountRepo.findByMerchantId(merchantId) : [];
+      account = all.find(a => a.isActive) || all[0] || null;
+    }
+
+    HttpServer.json(res, 200, {
+      businessName: merchant?.businessName || process.env.DEFAULT_APP_NAME || 'YOUPI PG Gateway',
+      appName: merchant?.branding?.appName || merchant?.businessName || 'YOUPI PG',
+      primaryColor: merchant?.branding?.primaryColor || '#2563eb',
+      payeeVpa: account?.upiId || process.env.DEFAULT_PAYEE_VPA || 'customer@ybl',
+      payeeName: account?.payeeName || merchant?.businessName || 'Merchant Store',
+      bankName: account?.bankName || 'Verified UPI Bank',
+      accountNumber: account?.accountNumber ? `••••${account.accountNumber.slice(-4)}` : null,
+      ifscCode: account?.ifscCode || null
+    });
+  });
+
   // GET /api/v1/checkout/:id/state
   server.get('/api/v1/checkout/:id/state', async (req, res, params) => {
     const session = ctx.sessionRepo.findById(params.id);

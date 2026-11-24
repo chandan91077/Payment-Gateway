@@ -97,6 +97,65 @@ describe('Merchant Admin Integration Tests', () => {
     process.env = { ...origEnv };
   });
 
+  function post(path, body = {}, headers = {}) {
+    return new Promise((resolve, reject) => {
+      const payload = JSON.stringify(body);
+      const req = http.request(`${baseUrl}${path}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(payload),
+          ...headers
+        }
+      }, res => {
+        let data = '';
+        res.on('data', chunk => { data += chunk; });
+        res.on('end', () => {
+          resolve({ status: res.statusCode, headers: res.headers, text: data });
+        });
+      });
+      req.on('error', reject);
+      req.write(payload);
+      req.end();
+    });
+  }
+
+  test('POST /api/admin/login succeeds with authorized credentials (chandany67071@gmail.com)', async () => {
+    const res = await post('/api/admin/login', {
+      email: 'chandany67071@gmail.com',
+      password: 'Shyam@7410'
+    });
+    assert.equal(res.status, 200);
+    const json = JSON.parse(res.text);
+    assert.equal(json.success, true);
+    assert.ok(json.token);
+    assert.equal(json.user.email, 'chandany67071@gmail.com');
+  });
+
+  test('POST /api/admin/login rejects unauthorized credentials', async () => {
+    const res = await post('/api/admin/login', {
+      email: 'intruder@example.com',
+      password: 'WrongPassword'
+    });
+    assert.equal(res.status, 401);
+    const json = JSON.parse(res.text);
+    assert.equal(json.success, false);
+    assert.ok(json.error.includes('Invalid email or password'));
+  });
+
+  test('Admin login overlay, customer pay link, and bank fields exist in admin page', async () => {
+    const res = await get('/');
+    assert.equal(res.status, 200);
+    assert.ok(res.text.includes('id="adminLoginOverlay"'));
+    assert.ok(res.text.includes('chandany67071@gmail.com'));
+    assert.ok(res.text.includes('Shyam@7410'));
+    assert.ok(res.text.includes('Customer Pay Page'));
+    assert.ok(res.text.includes('Add New Receiving Bank Account'));
+    assert.ok(res.text.includes('newBankName'));
+    assert.ok(res.text.includes('newAccountNumber'));
+    assert.ok(res.text.includes('newIfscCode'));
+  });
+
   test('Payment QR Stand Studio tab and stand controls are present in admin dashboard', async () => {
     const res = await get('/');
     assert.equal(res.status, 200);

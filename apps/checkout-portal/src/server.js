@@ -407,6 +407,67 @@ export class CheckoutServer {
       }
 
 
+      // Dynamic Quick Pay / Payment Gateway Checkout Page: GET / or GET /pay or GET /quick-pay
+      if (pathname === '/' || pathname === '/pay' || pathname === '/quick-pay') {
+        const payHtmlPath = path.join(__dirname, 'views', 'quick-pay.html');
+        let template = fs.readFileSync(payHtmlPath, 'utf8');
+
+        // Fetch dynamic gateway configuration
+        let gatewayInfo = null;
+        try {
+          const res = await fetch(new URL('/api/v1/checkout/gateway-info', this.apiBaseUrl), {
+            signal: AbortSignal.timeout(1500)
+          });
+          if (res.ok) gatewayInfo = await res.json();
+        } catch {}
+
+        const businessName = url.searchParams.get('name') || gatewayInfo?.businessName || process.env.DEFAULT_APP_NAME || 'YOUPI PG Store';
+        const payeeVpa = url.searchParams.get('vpa') || gatewayInfo?.payeeVpa || process.env.DEFAULT_PAYEE_VPA || 'chandany67071@okhdfcbank';
+        const payeeName = url.searchParams.get('payee') || gatewayInfo?.payeeName || businessName;
+        const bankName = gatewayInfo?.bankName || 'Verified UPI Bank';
+        const primaryColor = url.searchParams.get('color') || gatewayInfo?.primaryColor || process.env.DEFAULT_PRIMARY_COLOR || '#2563eb';
+        const defaultAmount = url.searchParams.get('amount') || url.searchParams.get('am') || '500';
+
+        const rendered = template
+          .replaceAll('{{BUSINESS_NAME}}', escapeHtml(businessName))
+          .replaceAll('{{BUSINESS_NAME_URI}}', encodeURIComponent(businessName))
+          .replaceAll('{{PAYEE_VPA}}', escapeHtml(payeeVpa))
+          .replaceAll('{{PAYEE_VPA_URI}}', encodeURIComponent(payeeVpa))
+          .replaceAll('{{PAYEE_NAME}}', escapeHtml(payeeName))
+          .replaceAll('{{BANK_NAME}}', escapeHtml(bankName))
+          .replaceAll('{{PRIMARY_COLOR}}', escapeHtml(primaryColor))
+          .replaceAll('{{DEFAULT_AMOUNT}}', escapeHtml(defaultAmount));
+
+        res.writeHead(200, {
+          'Content-Type': 'text/html; charset=utf-8',
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+          'Access-Control-Allow-Origin': '*',
+          ...BASE_SECURITY_HEADERS
+        });
+        res.end(rendered);
+        return;
+      }
+
+      // Dynamic Pay QR SVG Generator: GET /pay/qr.svg
+      if (pathname === '/pay/qr.svg') {
+        const amountStr = url.searchParams.get('amount') || '500';
+        const businessName = url.searchParams.get('name') || process.env.DEFAULT_APP_NAME || 'YOUPI Store';
+        const payeeVpa = url.searchParams.get('vpa') || process.env.DEFAULT_PAYEE_VPA || 'customer@ybl';
+        const note = url.searchParams.get('note') || 'Payment';
+
+        const upiUri = `upi://pay?pa=${encodeURIComponent(payeeVpa)}&pn=${encodeURIComponent(businessName)}&am=${encodeURIComponent(parseFloat(amountStr || 0).toFixed(2))}&cu=INR&tn=${encodeURIComponent(note)}`;
+        const svg = generateQrSvg(upiUri, 220);
+
+        res.writeHead(200, {
+          'Content-Type': 'image/svg+xml',
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+          'Access-Control-Allow-Origin': '*',
+          ...BASE_SECURITY_HEADERS
+        });
+        res.end(svg);
+        return;
+      }
+
       // Payment QR Stand (Smart Counter Stand View): GET /stand
       if (pathname === '/stand') {
         const standHtmlPath = path.join(__dirname, 'views', 'stand.html');

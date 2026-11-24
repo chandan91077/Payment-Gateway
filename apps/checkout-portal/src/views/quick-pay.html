@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Pay to {{BUSINESS_NAME}} — Official UPI Payment Gateway</title>
+  <style>
+    :root {
+      --primary: {{PRIMARY_COLOR}};
+      --primary-dark: #1d4ed8;
+      --bg: #0b0f19;
+      --surface: #111827;
+      --surface-card: #1f2937;
+      --border: #374151;
+      --text: #f9fafb;
+      --text-muted: #9ca3af;
+      --success: #10b981;
+      --gpay: #1a73e8;
+      --phonepe: #5f259f;
+      --paytm: #00baf2;
+      --bhim: #00838f;
+      --cred: #1a1a1a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 1rem;
+    }
+
+    .checkout-container {
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    /* Merchant Header Card */
+    .merchant-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    .merchant-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .org-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.12);
+      padding: 0.2rem 0.5rem;
+      border-radius: 9999px;
+      width: fit-content;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .org-name {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #ffffff;
+      line-height: 1.2;
+    }
+    .verified-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #34d399;
+      margin-top: 0.15rem;
+    }
+    .merchant-logo {
+      width: 52px;
+      height: 52px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--primary), #3b82f6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      color: #ffffff;
+      font-weight: 800;
+      box-shadow: 0 4px 12px rgba(37,99,235,0.35);
+      flex-shrink: 0;
+    }
+
+    /* Bank Account & VPA Indicator Banner */
+    .bank-indicator {
+      background: rgba(31, 41, 55, 0.7);
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .bank-badge {
+      color: #e2e8f0;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .vpa-tag {
+      font-family: monospace;
+      color: #60a5fa;
+      font-weight: 700;
+    }
+
+    /* Main Payment Form Card */
+    .payment-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+
+    .section-label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+    }
+
+    /* Amount Input Box */
+    .amount-input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .rupee-symbol {
+      position: absolute;
+      left: 1.25rem;
+      font-size: 2rem;
+      font-weight: 800;
+      color: #94a3b8;
+      pointer-events: none;
+    }
+    .amount-input {
+      width: 100%;
+      padding: 1rem 1rem 1rem 3.2rem;
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: #ffffff;
+      background: var(--surface-card);
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      outline: none;
+      transition: all 0.2s ease;
+      font-variant-numeric: tabular-nums;
+    }
+    .amount-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(37,99,235,0.25);
+    }
+
+    /* Quick Preset Chips */
+    .preset-chips {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.5rem;
+    }
+    .chip-btn {
+      padding: 0.55rem 0.5rem;
+      background: var(--surface-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: #e2e8f0;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s ease;
+    }
+    .chip-btn:hover, .chip-btn:active {
+      background: #374151;
+      border-color: var(--primary);
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+    .chip-btn.active {
+      background: rgba(37,99,235,0.2);
+      border-color: var(--primary);
+      color: #60a5fa;
+    }
+
+    /* Customer Note / Purpose Input */
+    .note-input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      font-size: 0.9rem;
+      color: #ffffff;
+      background: var(--surface-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .note-input:focus {
+      border-color: var(--primary);
+    }
+
+    /* Dynamic QR Code Card */
+    .qr-box {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+    }
+    .qr-image-container {
+      width: 220px;
+      height: 220px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0.5rem 0;
+      position: relative;
+    }
+    .qr-image-container img {
+      width: 100%;
+      height: 100%;
+      border-radius: 8px;
+      object-fit: contain;
+    }
+    .qr-caption {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #475569;
+      margin-top: 0.25rem;
+    }
+    .qr-amount-tag {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    /* BIG PAY NOW BUTTON */
+    .btn-pay-now {
+      width: 100%;
+      padding: 1.1rem 1.5rem;
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      color: #ffffff;
+      font-size: 1.2rem;
+      font-weight: 800;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      box-shadow: 0 6px 20px rgba(37,99,235,0.45);
+      transition: all 0.2s ease;
+    }
+    .btn-pay-now:hover, .btn-pay-now:active {
+      filter: brightness(1.1);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(37,99,235,0.55);
+    }
+
+    /* Direct UPI Apps Row */
+    .app-buttons-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+    .app-buttons-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.5rem;
+    }
+    .btn-upi-app {
+      padding: 0.65rem 0.25rem;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface-card);
+      color: #ffffff;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.3rem;
+      transition: all 0.15s ease;
+      text-decoration: none;
+    }
+    .btn-upi-app:hover, .btn-upi-app:active {
+      background: #374151;
+      border-color: #64748b;
+      transform: translateY(-2px);
+    }
+    .app-icon-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+      font-weight: 900;
+      color: #fff;
+    }
+
+    /* UTR / Reference Manual Submission */
+    .utr-section {
+      background: rgba(31, 41, 55, 0.4);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .utr-toggle-btn {
+      background: transparent;
+      border: none;
+      color: #38bdf8;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0;
+    }
+    .utr-form {
+      display: none;
+      flex-direction: column;
+      gap: 0.75rem;
+      padding-top: 0.5rem;
+    }
+    .utr-form.open {
+      display: flex;
+    }
+    .btn-verify-utr {
+      padding: 0.75rem;
+      background: var(--success);
+      color: #ffffff;
+      border: none;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    /* Footer Trust Signals */
+    .trust-footer {
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      margin-top: 0.5rem;
+    }
+    .trust-badges {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1rem;
+      font-size: 0.8rem;
+      color: #94a3b8;
+    }
+
+    /* Success Celebration Overlay */
+    .success-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(6, 78, 59, 0.96);
+      backdrop-filter: blur(8px);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      text-align: center;
+    }
+    .success-modal.active {
+      display: flex;
+      animation: modalFadeIn 0.3s ease;
+    }
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.92); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .success-box {
+      background: #064e3b;
+      border: 1px solid #059669;
+      border-radius: 24px;
+      padding: 2rem 1.75rem;
+      max-width: 400px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: #ffffff;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+    }
+    .success-check {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: #10b981;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      margin-bottom: 1rem;
+      box-shadow: 0 0 25px rgba(16,185,129,0.5);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="checkout-container">
+
+    <!-- 1. DYNAMIC ORGANIZATION / MERCHANT CARD -->
+    <div class="merchant-card">
+      <div class="merchant-info">
+        <span class="org-badge">⚡ Official UPI Gateway</span>
+        <h1 class="org-name" id="displayOrgName">{{BUSINESS_NAME}}</h1>
+        <div class="verified-pill">
+          <span>✓</span>
+          <span>Verified Merchant • 0% Extra Fees</span>
+        </div>
+      </div>
+      <div class="merchant-logo" id="displayOrgLogo">
+        <span>₹</span>
+      </div>
+    </div>
+
+    <!-- 2. RECEIVING BANK & VPA BANNER -->
+    <div class="bank-indicator">
+      <div class="bank-badge">
+        <span>🏦</span>
+        <span id="displayBankName">{{BANK_NAME}}</span>
+      </div>
+      <div>
+        <span>Payee: </span>
+        <span class="vpa-tag" id="displayVpa">{{PAYEE_VPA}}</span>
+      </div>
+    </div>
+
+    <!-- 3. PAYMENT CONTROL CARD -->
+    <div class="payment-card">
+      
+      <!-- Amount Input -->
+      <div>
+        <label class="section-label" for="payAmount">Enter Amount to Pay (₹)</label>
+        <div class="amount-input-wrapper">
+          <span class="rupee-symbol">₹</span>
+          <input 
+            type="number" 
+            id="payAmount" 
+            class="amount-input" 
+            value="{{DEFAULT_AMOUNT}}" 
+            min="1" 
+            max="100000" 
+            step="1" 
+            inputmode="numeric" 
+            placeholder="0"
+            oninput="handleAmountChange()" 
+          />
+        </div>
+      </div>
+
+      <!-- Quick Amount Preset Chips -->
+      <div class="preset-chips">
+        <button type="button" class="chip-btn" onclick="quickSetAmount(100)">+ ₹100</button>
+        <button type="button" class="chip-btn" onclick="quickSetAmount(250)">+ ₹250</button>
+        <button type="button" class="chip-btn" onclick="quickSetAmount(500)">+ ₹500</button>
+        <button type="button" class="chip-btn" onclick="quickSetAmount(1000)">+ ₹1,000</button>
+        <button type="button" class="chip-btn" onclick="quickSetAmount(2000)">+ ₹2,000</button>
+        <button type="button" class="chip-btn" onclick="quickSetAmount(5000)">+ ₹5,000</button>
+      </div>
+
+      <!-- Optional Payment Note / Reference -->
+      <div>
+        <label class="section-label" for="payNote">Payment Note / Order ID (Optional)</label>
+        <input 
+          type="text" 
+          id="payNote" 
+          class="note-input" 
+          placeholder="e.g. Order #1001 or Bill Payment" 
+          maxlength="50" 
+          oninput="handleNoteChange()" 
+        />
+      </div>
+
+      <!-- 4. DYNAMIC REAL-TIME UPI QR CODE -->
+      <div class="qr-box">
+        <div class="qr-caption">SCAN WITH ANY UPI APP</div>
+        <div class="qr-amount-tag" id="qrAmountDisplay">₹500.00</div>
+        <div class="qr-image-container" id="qrContainer">
+          <img id="dynamicQrImg" src="/pay/qr.svg?amount=500&name={{BUSINESS_NAME_URI}}&vpa={{PAYEE_VPA_URI}}" alt="UPI QR Code" />
+        </div>
+        <div style="font-size:0.75rem; color:#64748b; font-weight:600;">
+          Google Pay • PhonePe • Paytm • BHIM • CRED
+        </div>
+      </div>
+
+      <!-- 5. BIG "PAY NOW" BUTTON — OPENS ALL INSTALLED UPI APPS ON PHONE -->
+      <button type="button" class="btn-pay-now" id="btnPayNow" onclick="handlePayNowClick()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+        </svg>
+        <span id="btnPayText">PAY ₹500 VIA UPI APP</span>
+      </button>
+
+      <!-- 6. 1-TAP DIRECT APP INTENT LAUNCHERS -->
+      <div class="app-buttons-section">
+        <div class="section-label" style="text-align:center;">Or Launch Installed App Directly:</div>
+        <div class="app-buttons-grid">
+          <!-- PhonePe -->
+          <button type="button" class="btn-upi-app" onclick="launchSpecificUpiApp('phonepe')" title="Pay with PhonePe">
+            <div class="app-icon-circle" style="background:#5f259f;">पे</div>
+            <span>PhonePe</span>
+          </button>
+          <!-- Google Pay -->
+          <button type="button" class="btn-upi-app" onclick="launchSpecificUpiApp('gpay')" title="Pay with Google Pay">
+            <div class="app-icon-circle" style="background:#1a73e8;">G</div>
+            <span>GPay</span>
+          </button>
+          <!-- Paytm -->
+          <button type="button" class="btn-upi-app" onclick="launchSpecificUpiApp('paytm')" title="Pay with Paytm">
+            <div class="app-icon-circle" style="background:#00baf2;">₹</div>
+            <span>Paytm</span>
+          </button>
+          <!-- BHIM -->
+          <button type="button" class="btn-upi-app" onclick="launchSpecificUpiApp('bhim')" title="Pay with BHIM UPI">
+            <div class="app-icon-circle" style="background:#00838f;">B</div>
+            <span>BHIM</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 7. UTR / TRANSACTION CONFIRMATION FORM -->
+      <div class="utr-section">
+        <button type="button" class="utr-toggle-btn" onclick="toggleUtrForm()">
+          <span>✓ Already Paid? Submit 12-Digit UPI UTR</span>
+          <span id="utrChevron">▼</span>
+        </button>
+        <div class="utr-form" id="utrForm">
+          <label style="font-size:0.8rem; color:var(--text-muted);">Enter 12-Digit Reference / UTR Number:</label>
+          <input 
+            type="text" 
+            id="utrInput" 
+            class="note-input" 
+            placeholder="e.g. 412356789012" 
+            maxlength="20" 
+          />
+          <button type="button" class="btn-verify-utr" onclick="handleUtrSubmit()">Confirm & Verify Payment</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 8. TRUST FOOTER -->
+    <footer class="trust-footer">
+      <div class="trust-badges">
+        <span>🔒 256-Bit SSL Encrypted</span>
+        <span>⚡ 100% Direct Peer-to-Peer</span>
+        <span>🛡️ NPCI Standard</span>
+      </div>
+      <div>Powered by youPI-PG Smart Gateway Controller</div>
+    </footer>
+
+  </div>
+
+  <!-- 9. SUCCESS CELEBRATION MODAL -->
+  <div class="success-modal" id="successModal">
+    <div class="success-box">
+      <div class="success-check">✓</div>
+      <h2 style="font-size:1.6rem; font-weight:800; margin-bottom:0.25rem;">Payment Successful!</h2>
+      <div style="font-size:0.9rem; color:#a7f3d0; margin-bottom:1rem;">Your transaction has been recorded.</div>
+      <div style="font-size:2.2rem; font-weight:900; color:#6ee7b7; margin-bottom:1rem;" id="successAmount">₹500.00</div>
+      <div style="background:rgba(0,0,0,0.3); padding:0.75rem 1rem; border-radius:12px; width:100%; font-size:0.85rem; margin-bottom:1.5rem; text-align:left;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:0.4rem;">
+          <span style="color:#a7f3d0;">Beneficiary:</span>
+          <strong id="successOrg">{{BUSINESS_NAME}}</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:0.4rem;">
+          <span style="color:#a7f3d0;">Receiving UPI:</span>
+          <span id="successVpa" style="font-family:monospace;">{{PAYEE_VPA}}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between;">
+          <span style="color:#a7f3d0;">UTR Ref:</span>
+          <span id="successUtr" style="font-family:monospace;">-</span>
+        </div>
+      </div>
+      <button type="button" onclick="resetPaymentPage()" style="background:#ffffff; color:#064e3b; font-weight:800; font-size:1rem; padding:0.75rem 2rem; border-radius:10px; border:none; cursor:pointer;">
+        Make Another Payment
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // State initialization from server-rendered tokens
+    const CONFIG = {
+      businessName: "{{BUSINESS_NAME}}",
+      payeeVpa: "{{PAYEE_VPA}}",
+      payeeName: "{{PAYEE_NAME}}",
+      bankName: "{{BANK_NAME}}"
+    };
+
+    let currentAmount = 500;
+    let currentNote = "Bill Payment";
+
+    // Read amount from URL parameters if provided (e.g. ?amount=1200&name=Store)
+    window.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      const urlAmount = parseFloat(params.get('amount') || params.get('am'));
+      if (urlAmount && !isNaN(urlAmount) && urlAmount > 0) {
+        currentAmount = urlAmount;
+        document.getElementById('payAmount').value = currentAmount;
+      }
+      const urlNote = params.get('note') || params.get('tn');
+      if (urlNote) {
+        currentNote = urlNote;
+        document.getElementById('payNote').value = currentNote;
+      }
+      updateUiState();
+    });
+
+    function formatCurrency(val) {
+      return '₹' + parseFloat(val).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function handleAmountChange() {
+      const val = parseFloat(document.getElementById('payAmount').value);
+      currentAmount = (val && !isNaN(val) && val > 0) ? val : 0;
+      updateUiState();
+    }
+
+    function handleNoteChange() {
+      currentNote = document.getElementById('payNote').value.trim() || "Bill Payment";
+      updateUiState();
+    }
+
+    function quickSetAmount(addVal) {
+      const input = document.getElementById('payAmount');
+      const current = parseFloat(input.value) || 0;
+      currentAmount = current + addVal;
+      input.value = currentAmount;
+      updateUiState();
+    }
+
+    // Build standard NPCI UPI URI
+    function buildUpiUri() {
+      const pa = encodeURIComponent(CONFIG.payeeVpa);
+      const pn = encodeURIComponent(CONFIG.businessName || CONFIG.payeeName || "Merchant");
+      const am = encodeURIComponent(parseFloat(currentAmount).toFixed(2));
+      const cu = "INR";
+      const tn = encodeURIComponent(currentNote || "Payment");
+      return `upi://pay?pa=${pa}&pn=${pn}&am=${am}&cu=${cu}&tn=${tn}`;
+    }
+
+    function updateUiState() {
+      const formatted = formatCurrency(currentAmount);
+      document.getElementById('qrAmountDisplay').textContent = formatted;
+      document.getElementById('btnPayText').textContent = `PAY ${formatted} VIA UPI APP`;
+
+      // Update dynamic server-rendered SVG QR code
+      const img = document.getElementById('dynamicQrImg');
+      if (img && currentAmount > 0) {
+        const qrUrl = `/pay/qr.svg?amount=${encodeURIComponent(currentAmount)}&name=${encodeURIComponent(CONFIG.businessName)}&vpa=${encodeURIComponent(CONFIG.payeeVpa)}&note=${encodeURIComponent(currentNote)}&t=${Date.now()}`;
+        img.src = qrUrl;
+      }
+    }
+
+    // MAIN "PAY NOW" HANDLER: Launches all installed UPI apps on mobile phone!
+    function handlePayNowClick() {
+      if (!currentAmount || currentAmount <= 0) {
+        alert("Please enter a valid amount greater than ₹0.");
+        document.getElementById('payAmount').focus();
+        return;
+      }
+
+      const upiUri = buildUpiUri();
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+      if (isMobile) {
+        // Direct intent launch — triggers Android/iOS UPI application selector!
+        window.location.href = upiUri;
+      } else {
+        // On desktop/laptop: Prompt user with choice to scan QR or copy UPI link
+        const copyChoice = confirm(
+          `UPI payments are designed for smartphones.\n\n` +
+          `• Click OK to COPY the UPI Payment Link to your clipboard.\n` +
+          `• Or scan the QR code above using your phone's camera / Google Pay / PhonePe.`
+        );
+        if (copyChoice) {
+          navigator.clipboard.writeText(upiUri).then(() => {
+            alert("✓ UPI Payment Link copied to clipboard!\n\nOpen this link on your smartphone to pay.");
+          }).catch(() => {
+            prompt("Copy this UPI Intent Link:", upiUri);
+          });
+        }
+      }
+    }
+
+    // Direct app deep-links
+    function launchSpecificUpiApp(appName) {
+      if (!currentAmount || currentAmount <= 0) {
+        alert("Please enter an amount first.");
+        return;
+      }
+
+      const pa = encodeURIComponent(CONFIG.payeeVpa);
+      const pn = encodeURIComponent(CONFIG.businessName);
+      const am = encodeURIComponent(parseFloat(currentAmount).toFixed(2));
+      const cu = "INR";
+      const tn = encodeURIComponent(currentNote);
+      const query = `pa=${pa}&pn=${pn}&am=${am}&cu=${cu}&tn=${tn}`;
+
+      let appUri = `upi://pay?${query}`;
+      if (appName === 'gpay') {
+        appUri = `tez://upi/pay?${query}`;
+      } else if (appName === 'phonepe') {
+        appUri = `phonepe://pay?${query}`;
+      } else if (appName === 'paytm') {
+        appUri = `paytmmp://pay?${query}`;
+      } else if (appName === 'bhim') {
+        appUri = `bhim://pay?${query}`;
+      }
+
+      window.location.href = appUri;
+      // Fallback to standard UPI intent if specific app package is not installed
+      setTimeout(() => {
+        window.location.href = `upi://pay?${query}`;
+      }, 800);
+    }
+
+    function toggleUtrForm() {
+      const form = document.getElementById('utrForm');
+      const chevron = document.getElementById('utrChevron');
+      form.classList.toggle('open');
+      chevron.textContent = form.classList.contains('open') ? '▲' : '▼';
+    }
+
+    function handleUtrSubmit() {
+      const utr = document.getElementById('utrInput').value.trim();
+      if (!utr || utr.length < 6) {
+        alert("Please enter a valid 12-digit UPI Reference / UTR Number from your payment receipt.");
+        return;
+      }
+
+      // Show success celebration
+      document.getElementById('successAmount').textContent = formatCurrency(currentAmount);
+      document.getElementById('successOrg').textContent = CONFIG.businessName;
+      document.getElementById('successVpa').textContent = CONFIG.payeeVpa;
+      document.getElementById('successUtr').textContent = utr;
+      document.getElementById('successModal').classList.add('active');
+
+      try {
+        // Play success chime
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+        osc.frequency.setValueAtTime(880.00, ctx.currentTime + 0.15); // A5
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.5);
+      } catch (e) {}
+    }
+
+    function resetPaymentPage() {
+      document.getElementById('successModal').classList.remove('active');
+      document.getElementById('utrInput').value = '';
+      toggleUtrForm();
+    }
+  </script>
+</body>
+</html>

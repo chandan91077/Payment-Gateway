@@ -508,6 +508,9 @@ export function registerAdminRoutes(server, ctx) {
         merchantId: a.merchantId,
         upiId: a.upiId,
         payeeName: a.payeeName,
+        bankName: a.bankName || null,
+        accountNumber: a.accountNumber || null,
+        ifscCode: a.ifscCode || null,
         isMerchantEnabled: a.isMerchantEnabled,
         isActive: a.isActive,
         isSlotBusy: a.isSlotBusy,
@@ -517,10 +520,10 @@ export function registerAdminRoutes(server, ctx) {
     });
   });
 
-  // POST /api/v1/admin/upi-accounts (Add a new VPA)
+  // POST /api/v1/admin/upi-accounts (Add a new VPA & Bank Details)
   server.post('/api/v1/admin/upi-accounts', async (req, res) => {
     const body = await HttpServer.parseBody(req);
-    const { upiId, payeeName, isActive } = body;
+    const { upiId, payeeName, bankName, accountNumber, ifscCode, isActive } = body;
     let merchant = resolveMerchant(req, body.merchantId);
 
     if (!merchant) {
@@ -545,6 +548,9 @@ export function registerAdminRoutes(server, ctx) {
       merchantId: merchant.id,
       upiId: upiId.trim(),
       payeeName: payeeName?.trim() || merchant.businessName,
+      bankName: bankName?.trim() || null,
+      accountNumber: accountNumber?.trim() || null,
+      ifscCode: ifscCode?.trim() || null,
       isMerchantEnabled: true,
       isActive: shouldActivate
     });

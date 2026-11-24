@@ -273,6 +273,31 @@ describe('Checkout Portal Integration Tests', () => {
       const closeDivs = (workspaceSlice.match(/<\/div>/g) || []).length;
       assert.equal(openDivs, closeDivs, `ypg-pc-workspace must have balanced <div> (${openDivs}) and </div> (${closeDivs}) tags so ypgStickyFooter is not ejected as a 3rd flex column on macOS/iOS`);
     });
+
+    test('GET /pay and GET / render dynamic quick pay checkout page with amount input & UPI intent button', async () => {
+      const res = await get('/pay?name=Apex+Enterprises&vpa=apex@okhdfcbank&amount=750');
+      assert.equal(res.status, 200);
+      assert.ok(res.headers['content-type'].includes('text/html'));
+      assert.ok(res.text.includes('Apex Enterprises'));
+      assert.ok(res.text.includes('apex@okhdfcbank'));
+      assert.ok(res.text.includes('id="payAmount"'));
+      assert.ok(res.text.includes('id="btnPayNow"'));
+      assert.ok(res.text.includes('id="dynamicQrImg"'));
+      assert.ok(res.text.includes('handlePayNowClick'));
+      assert.ok(res.text.includes('launchSpecificUpiApp'));
+      assert.ok(res.text.includes('PhonePe'));
+      assert.ok(res.text.includes('GPay'));
+      assert.ok(res.text.includes('Paytm'));
+      assert.ok(res.text.includes('BHIM'));
+    });
+
+    test('GET /pay/qr.svg returns dynamic UPI QR SVG with amount & UPI parameters', async () => {
+      const res = await get('/pay/qr.svg?amount=750.00&vpa=test@upi&name=Store');
+      assert.equal(res.status, 200);
+      assert.equal(res.headers['content-type'], 'image/svg+xml');
+      assert.ok(res.text.startsWith('<svg'));
+      assert.ok(res.text.endsWith('</svg>'));
+    });
   });
 });
 

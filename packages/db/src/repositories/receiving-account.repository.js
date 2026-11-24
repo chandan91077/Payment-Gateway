@@ -31,10 +31,10 @@ export class ReceivingAccountRepository {
 
       const sql = `
         INSERT INTO payment_receiving_accounts (
-          id, merchant_id, upi_id, payee_name, is_merchant_enabled,
+          id, merchant_id, upi_id, payee_name, bank_name, account_number, ifsc_code, is_merchant_enabled,
           is_active, is_slot_busy, current_active_session_id, created_at, updated_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `;
 
       this.db.execute(sql, [
@@ -42,6 +42,9 @@ export class ReceivingAccountRepository {
         data.merchantId,
         data.upiId.trim(),
         data.payeeName.trim(),
+        data.bankName ? data.bankName.trim() : null,
+        data.accountNumber ? data.accountNumber.trim() : null,
+        data.ifscCode ? data.ifscCode.trim().toUpperCase() : null,
         isMerchantEnabled ? 1 : 0,
         isActive ? 1 : 0,
         0,
@@ -233,6 +236,9 @@ export class ReceivingAccountRepository {
       merchantId: row.merchant_id,
       upiId: row.upi_id,
       payeeName: row.payee_name,
+      bankName: row.bank_name || null,
+      accountNumber: row.account_number || null,
+      ifscCode: row.ifsc_code || null,
       isMerchantEnabled: Boolean(row.is_merchant_enabled !== undefined ? row.is_merchant_enabled : 1),
       isActive: Boolean(row.is_active),
       isSlotBusy: Boolean(row.is_slot_busy),

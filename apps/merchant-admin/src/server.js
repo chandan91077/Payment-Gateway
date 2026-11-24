@@ -55,6 +55,27 @@ if (!process.env.BASE_PAYMENT_API_URL && typeof process.loadEnvFile === 'functio
   } catch {}
 }
 
+function readJsonBody(req) {
+  return new Promise((resolve, reject) => {
+    let raw = '';
+    req.on('data', chunk => {
+      raw += chunk;
+      if (raw.length > 1024 * 64) {
+        req.destroy();
+        reject(new Error('Body too large'));
+      }
+    });
+    req.on('end', () => {
+      try {
+        resolve(raw ? JSON.parse(raw) : {});
+      } catch {
+        resolve({});
+      }
+    });
+    req.on('error', reject);
+  });
+}
+
 export class AdminServer {
   /**
    * @param {{
@@ -108,6 +129,79 @@ export class AdminServer {
       if (pathname === '/health') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ status: 'UP', service: 'merchant-admin' }));
+        return;
+      }
+
+      // Admin Login Endpoint: POST /api/admin/login
+      if (pathname === '/api/admin/login' && req.method === 'POST') {
+        const body = await readJsonBody(req);
+        const email = String(body.email || '').trim().toLowerCase();
+        const password = String(body.password || '').trim();
+
+        // Admin Credentials as requested: mail:chandany67071@gmail.com, password: Shyam@7410
+        if (email === 'chandany67071@gmail.com' && password === 'Shyam@7410') {
+          const token = Buffer.from(`${email}:${Date.now()}`).toString('base64');
+          res.writeHead(200, {
+            'Content-Type': 'application/json',
+            'Set-Cookie': `youpi_admin_auth=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400`,
+            'Access-Control-Allow-Origin': '*',
+            ...BASE_SECURITY_HEADERS
+          });
+          res.end(JSON.stringify({
+            success: true,
+            token,
+            user: {
+              email: 'chandany67071@gmail.com',
+              name: 'Chandan (Admin)',
+              role: 'Super Administrator'
+            }
+          }));
+          return;
+        }
+
+        res.writeHead(401, {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          ...BASE_SECURITY_HEADERS
+        });
+        res.end(JSON.stringify({
+          success: false,
+          error: 'Invalid email or password. Please use authorized admin credentials.'
+        }));
+        return;
+      }
+
+      // Admin Auth Status Check: GET /api/admin/auth-check
+      if (pathname === '/api/admin/auth-check' && req.method === 'GET') {
+        const cookie = req.headers.cookie || '';
+        const authHeader = req.headers.authorization || '';
+        const hasSession = cookie.includes('youpi_admin_auth=') || authHeader.startsWith('Bearer ');
+
+        res.writeHead(200, {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          ...BASE_SECURITY_HEADERS
+        });
+        res.end(JSON.stringify({
+          authenticated: Boolean(hasSession),
+          user: hasSession ? {
+            email: 'chandany67071@gmail.com',
+            name: 'Chandan (Admin)',
+            role: 'Super Administrator'
+          } : null
+        }));
+        return;
+      }
+
+      // Admin Logout Endpoint: POST /api/admin/logout
+      if (pathname === '/api/admin/logout' && req.method === 'POST') {
+        res.writeHead(200, {
+          'Content-Type': 'application/json',
+          'Set-Cookie': 'youpi_admin_auth=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0',
+          'Access-Control-Allow-Origin': '*',
+          ...BASE_SECURITY_HEADERS
+        });
+        res.end(JSON.stringify({ success: true, message: 'Logged out successfully' }));
         return;
       }
 
